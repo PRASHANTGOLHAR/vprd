@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Payment Request Form</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Airtable Configuration Alert -->
+       
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <div class="form-header">
+                <h1>Vendor Payment Request Form</h1>
+                <p>We'll get back to you soon</p>
+            </div>
+
+            <form id="vendorPaymentForm" class="form-content">
+                <!-- Vendor Name -->
+                <div class="form-group">
+                    <label for="vendorName">🏢 Vendor Name *</label>
+                    <input type="text" id="vendorName" name="vendorName" placeholder="Enter vendor name" required>
+                </div>
+
+                <!-- Batch ID -->
+                <div class="form-group">
+                    <label for="batchId">📄 Batch ID *</label>
+                    <input type="text" id="batchId" name="batchId" placeholder="Enter batch ID" required>
+                </div>
+
+                <!-- Invoice Number -->
+                <div class="form-group">
+                    <label for="invoiceNumber">📋 Invoice Number *</label>
+                    <input type="text" id="invoiceNumber" name="invoiceNumber" placeholder="Enter invoice number"
+                        required>
+                </div>
+
+                <!-- Bank Details -->
+                <div class="form-group">
+                    <label for="bankDetails">💳 Bank Details *</label>
+                    <input type="text" id="bankDetails" name="bankDetails" placeholder="Account Number, IFSC Code" required>
+                </div>
+
+                <!-- Payment Request Options -->
+                <div class="form-group">
+                    <label>📅 Payment Request Option *</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="earliest" name="paymentOption" value="earliest" checked>
+                            <label for="earliest">Opt for earliest payment</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="selectDate" name="paymentOption" value="select_date">
+                            <label for="selectDate">Select payment date</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conditional Date Field -->
+                <div class="form-group" id="dateField" style="display: none;">
+                    <label for="paymentDate">📅 Payment Date *</label>
+                    <input type="date" id="paymentDate" name="paymentDate">
+                </div>
+
+                <!-- Interest Rate Note -->
+                <div class="info-note">
+                    <div class="note-icon">ℹ️</div>
+                    <div class="note-content">
+                        <strong>Interest Rate Information:</strong>
+                        <ul>
+                            <li>• 0-30 Days before Due date: <span class="badge">2% per annum</span></li>
+                            <li>• 31-60 Days before Due date: <span class="badge">5% per annum</span></li>
+                            <li>• 61-90 Days before Due date: <span class="badge">10% per annum</span></li>
+                            <li>• 90+ Days before Due date: <span class="badge">12% per annum</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Declaration -->
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="declaration" name="declaration" required>
+                        <label for="declaration">I hereby declare that the information provided is accurate and
+                            complete. *</label>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    Submit Payment Request
+                </button>
+            </form>
+        </div>
+
+        <!-- Thank You Message -->
+          
+        <div id="thankYouMessage" class="thank-you-container" style="display: none;">
+            <div class="config-alert">
+            <!-- <div class="alert-icon"></div> -->
+            <!-- <div class="alert-content">
+                 <strong>Airtable Setup Required:</strong> Please update the AIRTABLE_CONFIG object in script.js with your credentials:
+                <ul>
+                    <li>• BASE_ID: Your Airtable base ID</li>
+                    <li>• TABLE_NAME: Your table name (e.g., 'Vendor_Payments')</li>
+                    <li>• API_KEY: Your Airtable API key</li>
+                </ul> 
+            </div> -->
+        </div>
+            <div class="thank-you-content">
+                <div class="success-icon">✅</div>
+                <h2>Thank You!</h2>
+                <p>Your payment request has been submitted successfully. Our team will reach out to you soon.</p>
+                <div class="badge-success">Stay Connected - We'll be in touch!</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
