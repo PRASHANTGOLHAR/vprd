@@ -1,129 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Payment Request Form</title>
+    <title>Vendor Payment Portal</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-
 <body>
     <div class="container">
-        <!-- Airtable Configuration Alert -->
-       
-
-        <!-- Form Container -->
-        <div class="form-container">
-            <div class="form-header">
-                <h1>Vendor Payment Request Form</h1>
-                <p>We'll get back to you soon</p>
+        <!-- Header -->
+        <div class="header-card">
+            <div class="header-content">
+                <h1 class="main-title">
+                    <i class="fas fa-ind-sign"></i>
+                    Vendor Payment Request Portal
+                </h1>
+                <p class="subtitle">Early Payment Request System</p>
             </div>
+        </div>
 
-            <form id="vendorPaymentForm" class="form-content">
-                <!-- Vendor Name -->
-                <div class="form-group">
-                    <label for="vendorName">🏢 Vendor Name *</label>
-                    <input type="text" id="vendorName" name="vendorName" placeholder="Enter vendor name" required>
-                </div>
-
-                <!-- Batch ID -->
-                <div class="form-group">
-                    <label for="batchId">📄 Batch ID *</label>
-                    <input type="text" id="batchId" name="batchId" placeholder="Enter batch ID" required>
-                </div>
-
-                <!-- Invoice Number -->
-                <div class="form-group">
-                    <label for="invoiceNumber">📋 Invoice Number *</label>
-                    <input type="text" id="invoiceNumber" name="invoiceNumber" placeholder="Enter invoice number"
-                        required>
-                </div>
-
-                <!-- Bank Details -->
-                <div class="form-group">
-                    <label for="bankDetails">💳 Bank Details *</label>
-                    <input type="text" id="bankDetails" name="bankDetails" placeholder="Account Number, IFSC Code" required>
-                </div>
-
-                <!-- Payment Request Options -->
-                <div class="form-group">
-                    <label>📅 Payment Request Option *</label>
-                    <div class="radio-group">
-                        <div class="radio-item">
-                            <input type="radio" id="earliest" name="paymentOption" value="earliest">
-                            <label for="earliest">Opt for earliest payment</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="selectDate" name="paymentOption" value="select_date">
-                            <label for="selectDate">Select payment date</label>
-                        </div>
+        <!-- Search Section -->
+        <div class="search-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-search"></i>
+                    Vendor Search
+                </h2>
+            </div>
+            <div class="card-content">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vendor-id">Vendor ID</label>
+                        <input type="text" id="vendor-id" placeholder="Enter vendor ID (e.g., VENDXXX)" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="search-option">Search Option</label>
+                        <select id="search-option" class="form-select">
+                            <option value="">Select option</option>
+                            <option value="full">Full Turnover</option>
+                            <option value="requested">Requested by Vendor</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Conditional Date Field -->
-                <div class="form-group" id="dateField" style="display: none;">
-                    <label for="paymentDate">📅 Payment Date *</label>
-                    <input type="date" id="paymentDate" name="paymentDate">
+                <div id="vendor-info" class="vendor-info hidden">
+                    <p>Vendor: <strong id="vendor-name-display"></strong></p>
                 </div>
 
-                <!-- Interest Rate Note -->
-                <div class="info-note">
-                    <div class="note-icon">ℹ️</div>
-                    <div class="note-content">
-                        <strong>Payment Schedule & Penalty Rates:</strong>
-                        <ul>
-                            <li>• 0-30 Days before Due date: <span class="badge">2% per annum</span></li>
-                            <li>• 31-60 Days before Due date: <span class="badge">5% per annum</span></li>
-                            <li>• 61-90 Days before Due date: <span class="badge">10% per annum</span></li>
-                            <li>• 90+ Days before Due date: <span class="badge">12% per annum</span></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Declaration -->
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="declaration" name="declaration" required>
-                        <label for="declaration">I hereby declare that the information provided is accurate and
-                            complete. *</label>
-                    </div>
-                </div>
-
-                <!-- Error Message -->
-                <div id="errorMessage" class="error-message" style="display: none;"></div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="submitBtn" class="submit-btn">
-                    Submit Payment Request
+                <button id="search-btn" class="btn btn-primary btn-full" disabled>
+                    <span id="search-text">Search Invoices</span>
+                    <i id="search-loading" class="fas fa-spinner fa-spin hidden"></i>
                 </button>
-            </form>
+            </div>
         </div>
 
-        <!-- Thank You Message -->
-          
-        <div id="thankYouMessage" class="thank-you-container" style="display: none;">
-            <div class="config-alert">
-            <!-- <div class="alert-icon"></div> -->
-            <!-- <div class="alert-content">
-                 <strong>Airtable Setup Required:</strong> Please update the AIRTABLE_CONFIG object in script.js with your credentials:
-                <ul>
-                    <li>• BASE_ID: Your Airtable base ID</li>
-                    <li>• TABLE_NAME: Your table name (e.g., 'Vendor_Payments')</li>
-                    <li>• API_KEY: Your Airtable API key</li>
-                </ul> 
-            </div> -->
+        <!-- Demo Data Notice -->
+        <!-- <div class="demo-notice">
+            <i class="fas fa-info-circle"></i>
+            <strong>Demo Mode:</strong> Try vendor IDs: VEND001, VEND002, or VEND003 to see sample data
+        </div> -->
+
+        <!-- Results Section -->
+        <div id="results-section" class="results-card hidden">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-file-text"></i>
+                    Invoice Results (<span id="invoice-count">0</span> found)
+                </h2>
+            </div>
+            <div class="card-content">
+                <div id="select-notice" class="select-notice hidden">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Select invoices for early payment request:
+                </div>
+
+                <div class="table-container">
+                    <table id="invoices-table" class="data-table">
+                        <thead>
+                            <tr id="table-header">
+                                <!-- Headers will be dynamically generated -->
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Rows will be dynamically generated -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Payment Date Selection -->
+                <div class="payment-section">
+                    <label for="payment-date">Payment Date</label>
+                    <input type="date" id="payment-date" class="form-input" min="">
+                    
+                    <button id="preview-btn" class="btn btn-secondary btn-full" disabled>
+                        <i class="fas fa-clock"></i>
+                        Preview Discount Calculation
+                    </button>
+                </div>
+            </div>
         </div>
-            <div class="thank-you-content">
-                <div class="success-icon">✅</div>
-                <h2>Thank You!</h2>
-                <p>Your payment request has been submitted successfully. Our team will reach out to you soon.</p>
-                <div class="badge-success">Stay Connected - We'll be in touch!</div>
+
+        <!-- Airtable Configuration Notice -->
+        <!-- <div class="config-notice">
+            <h3><i class="fas fa-cog"></i> Airtable Configuration Required</h3>
+            <p><strong>⚠️ UPDATE THESE VALUES IN JavaScript FILE:</strong></p>
+            <div class="config-code">
+                <pre>const AIRTABLE_CONFIG = {
+    BASE_ID: 'YOUR_BASE_ID_HERE',
+    TABLE_NAME: 'Invoices', 
+    API_KEY: 'YOUR_API_KEY_HERE'
+};</pre>
+            </div>
+            <p><strong>Required Airtable Fields:</strong></p>
+            <ul>
+                <li>Vendor_ID (Single line text)</li>
+                <li>Vendor_Name (Single line text)</li>
+                <li>Batch_ID (Single line text)</li>
+                <li>Invoice_Number (Single line text)</li>
+                <li>Invoice_Amount (Currency/Number)</li>
+                <li>Invoice_Date (Date)</li>
+                <li>Due_Date (Date)</li>
+                <li>Payment_Option (Single select)</li>
+                <li>Payment_Date (Date)</li>
+                <li>Payment_Amount (Currency/Number)</li>
+            </ul>
+        </div> -->
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-exclamation-circle"></i>
+                    Payment Preview
+                </h2>
+                <button id="close-modal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-label">Original Amount</div>
+                        <div class="summary-value" id="original-amount">₹0</div>
+                    </div>
+                    <div class="summary-card discount">
+                        <div class="summary-label">Total Discount</div>
+                        <div class="summary-value" id="discount-amount">₹0</div>
+                    </div>
+                    <div class="summary-card payment">
+                        <div class="summary-label">Payment Amount</div>
+                        <div class="summary-value" id="payment-amount">₹0</div>
+                    </div>
+                </div>
+
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <p>
+                        🎉 Based on the due dates of your invoices, you are eligible for a total discount of 
+                        <strong id="discount-highlight">₹0</strong>
+                    </p>
+                    <p class="payment-date-info">Payment Date: <span id="selected-payment-date"></span></p>
+                </div>
+
+                <div class="preview-table-container">
+                    <table id="preview-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Original Amount</th>
+                                <th>Days to Due</th>
+                                <th>Discount %</th>
+                                <th>Discount Amount</th>
+                                <th>Payment Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-table-body">
+                            <!-- Preview data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-btn" class="btn btn-outline">Cancel</button>
+                <button id="confirm-btn" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i>
+                    Confirm & Submit
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-check-circle"></i>
+                    Success!
+                </h2>
+            </div>
+            <div class="modal-body">
+                <div class="success-message">
+                    <i class="fas fa-party-horn"></i>
+                    <p><strong>You have successfully submitted early payment request against your invoices</strong></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="success-ok-btn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="script.js"></script>
 </body>
-
 </html>
