@@ -1,11 +1,10 @@
-// ⚠️ AIRTABLE CONFIGURATION - UPDATE THESE VALUES ⚠️
+
 const AIRTABLE_CONFIG = {
     BASE_ID: 'appVMSlbsgAx0cH8v', // Replace with your Airtable Base ID
     TABLE_NAME: 'AP CRM', // Your table name
     API_KEY: 'patkafVHW8kIY2H8t.8d9cf3705f850e5eb13dfa9f4ef1fb532588765ccdf4d35a6218461b22aba7a6', // Replace with your Airtable API key
 };
 
-// Demo data for testing (remove this when using real Airtable)
 
 // Global state
 let currentInvoices = [];
@@ -16,11 +15,12 @@ let currentVendorName = '';
 // DOM Elements
 const vendorIdInput = document.getElementById('vendor-id');
 const searchOptionSelect = document.getElementById('search-option');
-const searchBtn = document.getElementById('search-btn');
-const searchText = document.getElementById('search-text');
-const searchLoading = document.getElementById('search-loading');
+const searchIconBtn = document.getElementById('search-icon-btn');
 const vendorInfo = document.getElementById('vendor-info');
 const vendorNameDisplay = document.getElementById('vendor-name-display');
+const fullTurnoverInfo = document.getElementById('full-turnover-info');
+const fullPaymentMessage = document.getElementById('full-payment-message');
+const paymentDateSection = document.getElementById('payment-date-section');
 const resultsSection = document.getElementById('results-section');
 const selectNotice = document.getElementById('select-notice');
 const invoiceCount = document.getElementById('invoice-count');
@@ -28,31 +28,39 @@ const tableHeader = document.getElementById('table-header');
 const tableBody = document.getElementById('table-body');
 const paymentDateInput = document.getElementById('payment-date');
 const previewBtn = document.getElementById('preview-btn');
+const previewText = document.getElementById('preview-text');
 const previewModal = document.getElementById('preview-modal');
 const successModal = document.getElementById('success-modal');
+const dueDateWarningModal = document.getElementById('due-date-warning-modal');
 const closeModalBtn = document.getElementById('close-modal');
+const closeWarningModalBtn = document.getElementById('close-warning-modal');
 const cancelBtn = document.getElementById('cancel-btn');
 const confirmBtn = document.getElementById('confirm-btn');
+const warningCancelBtn = document.getElementById('warning-cancel-btn');
 const successOkBtn = document.getElementById('success-ok-btn');
+const tooltip = document.getElementById('tooltip');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
+    setupTooltips();
     setMinPaymentDate();
-});
+})
 
 function setupEventListeners() {
     vendorIdInput.addEventListener('input', validateForm);
-    searchOptionSelect.addEventListener('change', validateForm);
-    searchBtn.addEventListener('click', handleSearch);
-    paymentDateInput.addEventListener('change', validatePreviewButton);
+    searchOptionSelect.addEventListener('change', handleSearchOptionChange);
+    searchIconBtn.addEventListener('click', handleSearch);
+    paymentDateInput.addEventListener('change', handlePaymentDateChange);
     previewBtn.addEventListener('click', handlePreview);
     closeModalBtn.addEventListener('click', closeModal);
+    closeWarningModalBtn.addEventListener('click', closeWarningModal);
     cancelBtn.addEventListener('click', closeModal);
     confirmBtn.addEventListener('click', handleConfirmSubmit);
+    warningCancelBtn.addEventListener('click', closeWarningModal);
     successOkBtn.addEventListener('click', closeSuccessModal);
     
-    // Close modal when clicking outside
+    // Close modals when clicking outside
     previewModal.addEventListener('click', function(e) {
         if (e.target === previewModal) {
             closeModal();
@@ -64,28 +72,155 @@ function setupEventListeners() {
             closeSuccessModal();
         }
     });
+    
+    dueDateWarningModal.addEventListener('click', function(e) {
+        if (e.target === dueDateWarningModal) {
+            closeWarningModal();
+        }
+    });
+}
+
+function setupTooltips() {
+    const tooltipIcons = document.querySelectorAll('.tooltip-icon');
+    
+    tooltipIcons.forEach(icon => {
+        icon.addEventListener('mouseenter', showTooltip);
+        icon.addEventListener('mouseleave', hideTooltip);
+        icon.addEventListener('mousemove', moveTooltip);
+    });
+}
+
+function showTooltip(e) {
+    const text = e.target.getAttribute('data-tooltip');
+    if (!text) return;
+    
+    tooltip.querySelector('.tooltip-content').textContent = text;
+    tooltip.classList.remove('hidden');
+    moveTooltip(e);
+}
+
+function hideTooltip() {
+    tooltip.classList.add('hidden');
+}
+
+function moveTooltip(e) {
+    const rect = tooltip.getBoundingClientRect();
+    const x = e.clientX - rect.width / 2;
+    const y = e.clientY - rect.height - 10;
+    
+    tooltip.style.left = Math.max(10, Math.min(x, window.innerWidth - rect.width - 10)) + 'px';
+    tooltip.style.top = Math.max(10, y) + 'px';
 }
 
 function setMinPaymentDate() {
     const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    paymentDateInput.min = tomorrow.toISOString().split('T')[0];
+    paymentDateInput.min = today.toISOString().split('T')[0];
 }
 
 function validateForm() {
     const vendorId = vendorIdInput.value.trim();
     const searchOption = searchOptionSelect.value;
     
-    searchBtn.disabled = !vendorId || !searchOption;
+    const isValid = !(!vendorId || !searchOption);
+    searchIconBtn.disabled = !isValid;
+    
+    // If vendor ID is empty, disable search options
+    if (!vendorId) {
+        searchOptionSelect.disabled = true;
+        searchOptionSelect.value = '';
+        currentSearchOption = '';
+        hideInfoPopups();
+    } else {
+        searchOptionSelect.disabled = false;
+    }
+}
+
+function hideInfoPopups() {
+    fullTurnoverInfo.classList.add('hidden');
+    const requestedVendorInfo = document.getElementById('requested-vendor-info');
+    if (requestedVendorInfo) {
+        requestedVendorInfo.classList.add('hidden');
+    }
+}
+
+function handleSearchOptionChange() {
+    const searchOption = searchOptionSelect.value;
     currentSearchOption = searchOption;
+    
+    // Show/hide info popups
+    const requestedVendorInfo = document.getElementById('requested-vendor-info');
+    if (searchOption === 'full') {
+        fullTurnoverInfo.classList.remove('hidden');
+        if (requestedVendorInfo) requestedVendorInfo.classList.add('hidden');
+    } else if (searchOption === 'requested') {
+        fullTurnoverInfo.classList.add('hidden');
+        if (requestedVendorInfo) requestedVendorInfo.classList.remove('hidden');
+    } else {
+        fullTurnoverInfo.classList.add('hidden');
+        if (requestedVendorInfo) requestedVendorInfo.classList.add('hidden');
+    }
+    
+    validateForm();
+    updatePaymentSection();
+}
+
+function updatePaymentSection() {
+    if (currentSearchOption === 'full') {
+        fullPaymentMessage.classList.remove('hidden');
+        paymentDateSection.classList.add('hidden');
+        previewText.textContent = 'Calculate Early Payment Benefits';
+    } else if (currentSearchOption === 'requested') {
+        fullPaymentMessage.classList.add('hidden');
+        paymentDateSection.classList.remove('hidden');
+        previewText.textContent = 'Preview Selected Invoices';
+    } else {
+        fullPaymentMessage.classList.add('hidden');
+        paymentDateSection.classList.add('hidden');
+    }
+    
+    validatePreviewButton();
 }
 
 function validatePreviewButton() {
-    const paymentDate = paymentDateInput.value;
-    const hasSelection = currentSearchOption === 'full' || selectedInvoices.length > 0;
+    if (currentSearchOption === 'full') {
+        // For full turnover, no date selection needed
+        previewBtn.disabled = currentInvoices.length === 0;
+    } else if (currentSearchOption === 'requested') {
+        const paymentDate = paymentDateInput.value;
+        const hasSelection = selectedInvoices.length > 0;
+        previewBtn.disabled = !paymentDate || !hasSelection || currentInvoices.length === 0;
+    } else {
+        previewBtn.disabled = true;
+    }
+}
+
+function handlePaymentDateChange() {
+    validatePreviewButton();
     
-    previewBtn.disabled = !paymentDate || !hasSelection || currentInvoices.length === 0;
+    if (currentSearchOption === 'requested' && selectedInvoices.length > 0) {
+        checkDateConflicts();
+    }
+}
+
+function setPaymentDateLimits() {
+    if (currentInvoices.length === 0) return;
+    
+    const today = new Date();
+    let earliestDueDate = null;
+    
+    if (currentSearchOption === 'full') {
+        // For full turnover, find earliest due date from all invoices
+        earliestDueDate = new Date(Math.min(...currentInvoices.map(inv => new Date(inv.fields.Due_Date))));
+    } else if (currentSearchOption === 'requested' && selectedInvoices.length > 0) {
+        // For selected invoices, find earliest due date from selected invoices
+        const selectedInvoiceData = currentInvoices.filter(inv => selectedInvoices.includes(inv.id));
+        earliestDueDate = new Date(Math.min(...selectedInvoiceData.map(inv => new Date(inv.fields.Due_Date))));
+    }
+    
+    if (earliestDueDate) {
+        paymentDateInput.min = today.toISOString().split('T')[0];
+        paymentDateInput.max = earliestDueDate.toISOString().split('T')[0];
+    }
 }
 
 async function handleSearch() {
@@ -108,7 +243,7 @@ async function handleSearch() {
             if (demoData) {
                 invoices = demoData.invoices;
                 currentVendorName = demoData.vendor_name;
-                showToast('Demo Mode', `Found ₹{invoices.length} demo invoices for ₹{currentVendorName}`, 'success');
+                showToast('Demo Mode', `Found ${invoices.length} demo invoices for ${currentVendorName}`, 'success');
             } else {
                 showToast('Demo Mode', 'No demo data found. Try VEND001, VEND002, or VEND003', 'warning');
                 setLoading(false);
@@ -135,7 +270,7 @@ async function handleSearch() {
             
             if (invoices.length > 0) {
                 currentVendorName = invoices[0].fields.Vendor_Name;
-                showToast('Success', `Found ₹{invoices.length} invoices for vendor: ₹{currentVendorName}`, 'success');
+                showToast('Success', `Found ${invoices.length} invoices for vendor: ${currentVendorName}`, 'success');
             } else {
                 showToast('No Results', 'No invoices found for this vendor ID', 'error');
                 setLoading(false);
@@ -148,6 +283,8 @@ async function handleSearch() {
         
         displayVendorInfo();
         displayInvoices();
+        updatePaymentSection();
+        setPaymentDateLimits();
         
     } catch (error) {
         console.error('Error fetching invoices:', error);
@@ -158,13 +295,11 @@ async function handleSearch() {
 }
 
 function setLoading(loading) {
-    searchBtn.disabled = loading;
+    searchIconBtn.disabled = loading;
     if (loading) {
-        searchText.textContent = 'Searching...';
-        searchLoading.classList.remove('hidden');
+        searchIconBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     } else {
-        searchText.textContent = 'Search Invoices';
-        searchLoading.classList.add('hidden');
+        searchIconBtn.innerHTML = '<i class="fas fa-search"></i>';
     }
 }
 
@@ -202,6 +337,7 @@ function displayInvoices() {
     // Build table body
     let bodyHTML = '';
     currentInvoices.forEach(invoice => {
+        // For display purposes, show discount based on current date
         const discountPercent = calculateDiscount(invoice.fields.Due_Date);
         const daysToDue = calculateDaysToDue(invoice.fields.Due_Date);
         const badgeClass = getDaysToDueBadgeClass(daysToDue);
@@ -223,10 +359,21 @@ function displayInvoices() {
                 <td>${formatDate(invoice.fields.Invoice_Date)}</td>
                 <td>${formatDate(invoice.fields.Due_Date)}</td>
                 <td><span class="badge ${badgeClass}">${daysToDue} days</span></td>
-                <td><span class="badge ${discountBadgeClass}">${discountPercent}%</span></td>
+                <td><span class="badge ${discountBadgeClass}">${discountPercent}%${currentSearchOption === 'requested' ? '*' : ''}</span></td>
             </tr>
         `;
     });
+    
+    // Add note about discount calculation for requested by vendor
+    if (currentSearchOption === 'requested') {
+        bodyHTML += `
+            <tr style="background: #f0f9ff;">
+                <td colspan="8" style="text-align: center; font-style: italic; color: #3b82f6; font-size: 12px;">
+                    * Discount % shown is based on current date. Final discount will be calculated based on your selected payment date.
+                </td>
+            </tr>
+        `;
+    }
     
     tableBody.innerHTML = bodyHTML;
     resultsSection.classList.remove('hidden');
@@ -244,20 +391,25 @@ function handleInvoiceSelection(invoiceId, isSelected) {
         selectedInvoices = selectedInvoices.filter(id => id !== invoiceId);
     }
     
+    setPaymentDateLimits();
     validatePreviewButton();
+    
+    if (paymentDateInput.value) {
+        checkDateConflicts();
+    }
 }
 
-function calculateDiscount(dueDate) {
-    const today = new Date();
+function calculateDiscount(dueDate, paymentDate = null) {
+    const baseDate = paymentDate ? new Date(paymentDate) : new Date();
     const due = new Date(dueDate);
-    const diffTime = due.getTime() - today.getTime();
+    const diffTime = due.getTime() - baseDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays >= 0 && diffDays <= 30) return 2;
     if (diffDays >= 31 && diffDays <= 60) return 5;
     if (diffDays >= 61 && diffDays <= 90) return 10;
     if (diffDays > 90) return 12;
-    return 0; // Past due
+    return 0; // Past due or same day
 }
 
 function calculateDaysToDue(dueDate) {
@@ -280,72 +432,153 @@ function getDiscountBadgeClass(percent) {
     return 'badge-red';
 }
 
-function handlePreview() {
-    const paymentDate = paymentDateInput.value;
+function checkDateConflicts() {
+    const paymentDate = new Date(paymentDateInput.value);
+    const conflictingInvoices = [];
     
-    if (!paymentDate) {
-        showToast('Error', 'Please select a payment date', 'error');
-        return;
-    }
+    const selectedInvoiceData = currentInvoices.filter(inv => selectedInvoices.includes(inv.id));
     
-    const relevantInvoices = currentSearchOption === 'full' 
-        ? currentInvoices 
-        : currentInvoices.filter(inv => selectedInvoices.includes(inv.id));
-    
-    if (relevantInvoices.length === 0) {
-        showToast('Error', 'No invoices selected', 'error');
-        return;
-    }
-    
-    const calculatedData = relevantInvoices.map(invoice => {
-        const discountPercent = calculateDiscount(invoice.fields.Due_Date);
-        const discountAmount = (invoice.fields.Invoice_Amount * discountPercent) / 100;
-        const paymentAmount = invoice.fields.Invoice_Amount - discountAmount;
-        const daysToDue = calculateDaysToDue(invoice.fields.Due_Date);
-        
-        return {
-            ...invoice,
-            discountPercent,
-            discountAmount,
-            paymentAmount,
-            daysToDue
-        };
+    selectedInvoiceData.forEach(invoice => {
+        const dueDate = new Date(invoice.fields.Due_Date);
+        if (paymentDate > dueDate) {
+            conflictingInvoices.push({
+                invoiceNumber: invoice.fields.Invoice_Number,
+                dueDate: invoice.fields.Due_Date,
+                daysDifference: Math.ceil((paymentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+            });
+        }
     });
     
-    const totalOriginalAmount = calculatedData.reduce((sum, inv) => sum + inv.fields.Invoice_Amount, 0);
-    const totalDiscountAmount = calculatedData.reduce((sum, inv) => sum + inv.discountAmount, 0);
-    const totalPaymentAmount = calculatedData.reduce((sum, inv) => sum + inv.paymentAmount, 0);
+    if (conflictingInvoices.length > 0) {
+        showDateConflictWarning(conflictingInvoices, paymentDate);
+        // Disable preview button when there are conflicts
+        previewBtn.disabled = true;
+        return false;
+    }
     
-    displayPreviewModal(calculatedData, {
-        totalOriginalAmount,
-        totalDiscountAmount,
-        totalPaymentAmount,
-        paymentDate: formatDate(paymentDate)
-    });
+    // Re-enable preview button if no conflicts
+    validatePreviewButton();
+    return true;
 }
 
-function displayPreviewModal(invoices, totals) {
+function showDateConflictWarning(conflictingInvoices, paymentDate) {
+    const conflictDetails = document.getElementById('conflict-details');
+    
+    let detailsHTML = `
+        <h5>❌ Problematic Invoices:</h5>
+        <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 12px; margin: 8px 0;">
+            <p style="color: #dc2626; font-weight: 500; margin-bottom: 8px;">
+                Selected Payment Date: <strong>${formatDate(paymentDate.toISOString().split('T')[0])}</strong>
+            </p>
+    `;
+    
+    conflictingInvoices.forEach(conflict => {
+        detailsHTML += `
+            <div class="conflict-item">
+                <div>
+                    <strong>Invoice:</strong> ${conflict.invoiceNumber}<br>
+                    <strong>Due Date:</strong> ${formatDate(conflict.dueDate)}
+                </div>
+                <span class="badge badge-red">Payment ${conflict.daysDifference} days after due date</span>
+            </div>
+        `;
+    });
+    
+    detailsHTML += '</div>';
+    conflictDetails.innerHTML = detailsHTML;
+    dueDateWarningModal.classList.remove('hidden');
+}
+
+function closeWarningModal() {
+    dueDateWarningModal.classList.add('hidden');
+}
+
+function handlePreview() {
+    if (currentSearchOption === 'requested' && selectedInvoices.length > 0) {
+        if (!checkDateConflicts()) {
+            return; // Don't proceed if there are conflicts
+        }
+    }
+    
+    let invoicesToProcess = [];
+    let paymentDate = null;
+    
+    if (currentSearchOption === 'full') {
+        invoicesToProcess = currentInvoices;
+        paymentDate = new Date(); // Use current date for full turnover
+    } else if (currentSearchOption === 'requested') {
+        invoicesToProcess = currentInvoices.filter(inv => selectedInvoices.includes(inv.id));
+        paymentDate = new Date(paymentDateInput.value);
+    }
+    
+    const calculations = calculatePaymentDetails(invoicesToProcess, paymentDate);
+    displayPreviewModal(calculations, paymentDate);
+}
+
+function calculatePaymentDetails(invoices, paymentDate) {
+    let totalOriginal = 0;
+    let totalDiscount = 0;
+    let totalPayment = 0;
+    const details = [];
+    
+    invoices.forEach(invoice => {
+        const originalAmount = invoice.fields.Invoice_Amount;
+        
+        // Calculate days between payment date and due date
+        const paymentDateObj = new Date(paymentDate);
+        const dueDate = new Date(invoice.fields.Due_Date);
+        const diffTime = dueDate.getTime() - paymentDateObj.getTime();
+        const daysToDue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Calculate discount based on payment date vs due date
+        const discountPercent = calculateDiscount(invoice.fields.Due_Date, paymentDate);
+        const discountAmount = originalAmount * (discountPercent / 100);
+        const paymentAmount = originalAmount - discountAmount;
+        
+        totalOriginal += originalAmount;
+        totalDiscount += discountAmount;
+        totalPayment += paymentAmount;
+        
+        details.push({
+            invoiceNumber: invoice.fields.Invoice_Number,
+            originalAmount,
+            daysToDue,
+            discountPercent,
+            discountAmount,
+            paymentAmount
+        });
+    });
+    
+    return {
+        totalOriginal,
+        totalDiscount,
+        totalPayment,
+        details
+    };
+}
+
+function displayPreviewModal(calculations, paymentDate) {
     // Update summary cards
-    document.getElementById('original-amount').textContent = `₹${totals.totalOriginalAmount.toLocaleString()}`;
-    document.getElementById('discount-amount').textContent = `₹${totals.totalDiscountAmount.toLocaleString()}`;
-    document.getElementById('payment-amount').textContent = `₹${totals.totalPaymentAmount.toLocaleString()}`;
-    document.getElementById('discount-highlight').textContent = `₹${totals.totalDiscountAmount.toLocaleString()}`;
-    document.getElementById('selected-payment-date').textContent = totals.paymentDate;
+    document.getElementById('original-amount').textContent = `₹${calculations.totalOriginal.toLocaleString()}`;
+    document.getElementById('discount-amount').textContent = `₹${calculations.totalDiscount.toLocaleString()}`;
+    document.getElementById('payment-amount').textContent = `₹${calculations.totalPayment.toLocaleString()}`;
+    document.getElementById('discount-highlight').textContent = `₹${calculations.totalDiscount.toLocaleString()}`;
+    document.getElementById('selected-payment-date').textContent = formatDate(paymentDate.toISOString().split('T')[0]);
     
     // Build preview table
     let previewHTML = '';
-    invoices.forEach(invoice => {
-        const daysBadgeClass = getDaysToDueBadgeClass(invoice.daysToDue);
-        const discountBadgeClass = getDiscountBadgeClass(invoice.discountPercent);
+    calculations.details.forEach(detail => {
+        const daysBadgeClass = getDaysToDueBadgeClass(detail.daysToDue);
+        const discountBadgeClass = getDiscountBadgeClass(detail.discountPercent);
         
         previewHTML += `
             <tr>
-                <td><strong>${invoice.fields.Invoice_Number}</strong></td>
-                <td>₹${invoice.fields.Invoice_Amount.toLocaleString()}</td>
-                <td><span class="badge ${daysBadgeClass}">${invoice.daysToDue} days</span></td>
-                <td><span class="badge ${discountBadgeClass}">${invoice.discountPercent}%</span></td>
-                <td style="color: #166534; font-weight: 500;">₹${invoice.discountAmount.toLocaleString()}</td>
-                <td><strong>₹${invoice.paymentAmount.toLocaleString()}</strong></td>
+                <td><strong>${detail.invoiceNumber}</strong></td>
+                <td>₹${detail.originalAmount.toLocaleString()}</td>
+                <td><span class="badge ${daysBadgeClass}">${detail.daysToDue} days</span></td>
+                <td><span class="badge ${discountBadgeClass}">${detail.discountPercent}%</span></td>
+                <td style="color: #166534; font-weight: 500;">₹${detail.discountAmount.toLocaleString()}</td>
+                <td><strong>₹${detail.paymentAmount.toLocaleString()}</strong></td>
             </tr>
         `;
     });
@@ -353,7 +586,7 @@ function displayPreviewModal(invoices, totals) {
     document.getElementById('preview-table-body').innerHTML = previewHTML;
     
     // Store data for submission
-    previewModal.previewData = { invoices, totals };
+    previewModal.previewData = { calculations, paymentDate };
     
     // Show modal
     previewModal.classList.remove('hidden');
@@ -361,8 +594,7 @@ function displayPreviewModal(invoices, totals) {
 }
 
 async function handleConfirmSubmit() {
-    const { invoices } = previewModal.previewData;
-    const paymentDate = paymentDateInput.value;
+    const { calculations, paymentDate } = previewModal.previewData;
     
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
@@ -374,7 +606,10 @@ async function handleConfirmSubmit() {
             showToast('Demo Mode', 'In real mode, this would update Airtable records', 'success');
         } else {
             // Real Airtable updates
-            const updatePromises = invoices.map(async (invoice) => {
+            const invoicesToUpdate = currentSearchOption === 'full' ? currentInvoices : 
+                currentInvoices.filter(inv => selectedInvoices.includes(inv.id));
+            
+            const updatePromises = invoicesToUpdate.map(async (invoice, index) => {
                 const response = await fetch(
                     `https://api.airtable.com/v0/${AIRTABLE_CONFIG.BASE_ID}/${AIRTABLE_CONFIG.TABLE_NAME}/${invoice.id}`,
                     {
@@ -386,8 +621,8 @@ async function handleConfirmSubmit() {
                         body: JSON.stringify({
                             fields: {
                                 Payment_Option: currentSearchOption === 'full' ? 'Full turnover' : 'Selected by date',
-                                Payment_Date: paymentDate,
-                                Payment_Amount: invoice.paymentAmount
+                                Payment_Date: paymentDate.toISOString().split('T')[0],
+                                Payment_Amount: calculations.details[index].paymentAmount
                             }
                         })
                     }
@@ -440,6 +675,7 @@ function resetForm() {
     paymentDateInput.value = '';
     vendorInfo.classList.add('hidden');
     resultsSection.classList.add('hidden');
+    hideInfoPopups();
     currentInvoices = [];
     selectedInvoices = [];
     currentSearchOption = '';
@@ -458,27 +694,32 @@ function formatDate(dateString) {
 
 function showToast(title, message, type = 'info') {
     const toastContainer = document.getElementById('toast-container');
-    
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    toast.className = `toast toast-${type}`;
+    
+    const icon = type === 'success' ? 'check-circle' : 
+                 type === 'error' ? 'exclamation-circle' : 
+                 type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
     toast.innerHTML = `
-        <div class="toast-title">${title}</div>
-        <div class="toast-message">${message}</div>
+        <div class="toast-content">
+            <i class="fas fa-${icon}"></i>
+            <div>
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
     `;
     
     toastContainer.appendChild(toast);
     
-    // Remove toast after 5 seconds
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
+        if (toast.parentElement) {
+            toast.remove();
         }
     }, 5000);
-    
-    // Add click to dismiss
-    toast.addEventListener('click', () => {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-        }
-    });
 }
