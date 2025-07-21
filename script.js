@@ -620,7 +620,7 @@ async function handleConfirmSubmit() {
                         },
                         body: JSON.stringify({
                             fields: {
-                                Discount_Method: currentSearchOption === 'full' ? 'Full Turnover' : 'Select Payment date',
+                                Payment_Option: currentSearchOption === 'full' ? 'Full turnover' : 'Selected by date',
                                 Payment_Date: paymentDate.toISOString().split('T')[0],
                                 Payment_Amount: calculations.details[index].paymentAmount
                             }
